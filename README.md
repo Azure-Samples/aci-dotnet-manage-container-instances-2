@@ -7,6 +7,7 @@ products:
 extensions:
 - services: Container-Instance
 - platforms: dotnet
+description: "Azure Container Instance sample for managing container instances with Azure File Share mount."
 ---
 
 # Manage Azure Container Instances with an existing Azure File Share using C# #
