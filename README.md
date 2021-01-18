@@ -5,8 +5,8 @@ languages:
 products:
 - azure
 extensions:
-- services: Container-Instance
-- platforms: dotnet
+  services: Container-Instance
+  platforms: dotnet
 ---
 
 # Manage Azure Container Instances with an existing Azure File Share using C# #
