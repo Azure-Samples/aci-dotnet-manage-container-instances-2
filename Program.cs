@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
-using Docker.DotNet;
 using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
@@ -13,6 +12,7 @@ using Microsoft.Azure.Management.Storage.Fluent.Models;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.File;
 using System;
+using System.Threading.Tasks;
 
 namespace ManageWithManualAzureFileShareMountCreation
 {
@@ -20,7 +20,23 @@ namespace ManageWithManualAzureFileShareMountCreation
     {
         private static readonly Region region = Region.USEast;
 
-        private async static void CreateFileShare(string saName, string storageAccountKey, string shareName)
+        public static async Task Main(string[] args)
+        {
+            try
+            {
+                IAzure azure = GetEnvironment();
+
+                Utilities.Log("Selected subscription: " + azure.SubscriptionId);
+
+                await RunSample(azure);
+            }
+            catch (Exception ex)
+            {
+                Utilities.Log(ex);
+            }
+        }
+
+        private static async Task CreateFileShare(string saName, string storageAccountKey, string shareName)
         {
             CloudFileShare cloudFileShare = CloudStorageAccount.Parse(
                 $"DefaultEndpointsProtocol=https;AccountName={saName};AccountKey={storageAccountKey};EndpointSuffix=core.windows.net")
@@ -36,7 +52,7 @@ namespace ManageWithManualAzureFileShareMountCreation
          *    - Retrieve container log content
          *    - Delete the container group resource
          */
-        public static void RunSample(IAzure azure)
+        public static async Task RunSample(IAzure azure)
         {
             string rgName = SdkContext.RandomResourceName("rgACI", 15);
             string aciName = SdkContext.RandomResourceName("acisample", 20);
@@ -57,7 +73,7 @@ namespace ManageWithManualAzureFileShareMountCreation
 
                 StorageAccountKey storageAccountKey = storageAccount.GetKeys()[0];
 
-                CreateFileShare(saName, storageAccountKey.Value, shareName);
+                await CreateFileShare(saName, storageAccountKey.Value, shareName);
 
                 //=============================================================
                 // Create a container group with one container instance of default CPU core count and memory size
@@ -113,29 +129,43 @@ namespace ManageWithManualAzureFileShareMountCreation
             }
         }
 
-        public static void Main(string[] args)
+        public static IAzure GetEnvironment()
         {
-            try
-            {
-                //=================================================================
-                // Authenticate
-                AzureCredentials credentials = SdkContext.AzureCredentialsFactory.FromFile(Environment.GetEnvironmentVariable("AZURE_AUTH_LOCATION"));
+            Environment.SetEnvironmentVariable("ClientId", "TODO");
+            Environment.SetEnvironmentVariable("ClientSecret", "TODO");
+            Environment.SetEnvironmentVariable("TenantId", "TODO");
+            Environment.SetEnvironmentVariable("SubscriptionId", "TODO");
 
-                var azure = Azure
+            IAzure azure;
+
+            var authPath = Environment.GetEnvironmentVariable("AZURE_AUTH_LOCATION");
+
+            if (authPath != null)
+            {
+                
+                AzureCredentials credentials = SdkContext.AzureCredentialsFactory.FromFile(Environment.GetEnvironmentVariable("AZURE_AUTH_LOCATION"));
+                
+                     azure = Microsoft.Azure.Management.Fluent.Azure
                     .Configure()
                     .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
                     .Authenticate(credentials)
                     .WithDefaultSubscription();
-
-                // Print selected subscription
-                Utilities.Log("Selected subscription: " + azure.SubscriptionId);
-
-                RunSample(azure);
             }
-            catch (Exception ex)
+            else
             {
-                Utilities.Log(ex);
+                ServicePrincipalLoginInformation principal = new ServicePrincipalLoginInformation()
+                {
+                    ClientId = Environment.GetEnvironmentVariable("ClientId"),
+                    ClientSecret = Environment.GetEnvironmentVariable("ClientSecret") ,
+                };
+
+                AzureCredentials azureCredential = new AzureCredentials(principal, Environment.GetEnvironmentVariable("TenantId"), AzureEnvironment.AzureGlobalCloud);
+                azure = Microsoft.Azure.Management.Fluent.Azure.Authenticate(azureCredential).WithSubscription(Environment.GetEnvironmentVariable("SubscriptionId"));
             }
+
+            return azure;
+           
         }
+
     }
 }
