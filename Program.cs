@@ -20,16 +20,15 @@ namespace ManageWithManualAzureFileShareMountCreation
     {
         private static readonly Region region = Region.USEast;
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             try
             {
                 IAzure azure = GetEnvironment();
 
-                // Print selected subscription
                 Utilities.Log("Selected subscription: " + azure.SubscriptionId);
 
-                RunSample(azure);
+                await RunSample(azure);
             }
             catch (Exception ex)
             {
@@ -53,7 +52,7 @@ namespace ManageWithManualAzureFileShareMountCreation
          *    - Retrieve container log content
          *    - Delete the container group resource
          */
-        public static void RunSample(IAzure azure)
+        public static async Task RunSample(IAzure azure)
         {
             string rgName = SdkContext.RandomResourceName("rgACI", 15);
             string aciName = SdkContext.RandomResourceName("acisample", 20);
@@ -74,7 +73,7 @@ namespace ManageWithManualAzureFileShareMountCreation
 
                 StorageAccountKey storageAccountKey = storageAccount.GetKeys()[0];
 
-                CreateFileShare(saName, storageAccountKey.Value, shareName);
+                await CreateFileShare(saName, storageAccountKey.Value, shareName);
 
                 //=============================================================
                 // Create a container group with one container instance of default CPU core count and memory size
@@ -132,10 +131,10 @@ namespace ManageWithManualAzureFileShareMountCreation
 
         public static IAzure GetEnvironment()
         {
-            Environment.SetEnvironmentVariable("ClientId", "");
-            Environment.SetEnvironmentVariable("ClientSecret", "");
-            Environment.SetEnvironmentVariable("TenantId", "");
-            Environment.SetEnvironmentVariable("SubscriptionId", "");
+            Environment.SetEnvironmentVariable("ClientId", "TODO");
+            Environment.SetEnvironmentVariable("ClientSecret", "TODO");
+            Environment.SetEnvironmentVariable("TenantId", "TODO");
+            Environment.SetEnvironmentVariable("SubscriptionId", "TODO");
 
             IAzure azure;
 
@@ -143,9 +142,10 @@ namespace ManageWithManualAzureFileShareMountCreation
 
             if (authPath != null)
             {
+                
                 AzureCredentials credentials = SdkContext.AzureCredentialsFactory.FromFile(Environment.GetEnvironmentVariable("AZURE_AUTH_LOCATION"));
-           
-                azure = Azure
+                
+                     azure = Microsoft.Azure.Management.Fluent.Azure
                     .Configure()
                     .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
                     .Authenticate(credentials)
